@@ -70,6 +70,23 @@ export const estadoPersonagemSchema = z.object({
     .object({ id: z.string(), estado: z.string(), missao: z.string(), termina_em: z.string(), loot_pendente: z.boolean() })
     .nullable()
     .default(null),
+  // Resumo do abrigo (Fase 7); null enquanto não escolheu
+  abrigo: z
+    .object({
+      nome: z.string(),
+      comida: numero,
+      agua: numero,
+      combustivel: numero,
+      energia_ok: z.boolean(),
+      tem_energia: z.boolean(),
+      producao_pronta: numero,
+      construindo: numero,
+      alertas: numero,
+    })
+    .nullable()
+    .default(null),
+  // Bônus das instalações nos atributos (Treinamento, Oficina, Enfermaria)
+  bonus_abrigo: z.record(numero).nullable().default(null),
   servidor_agora: z.string(),
 });
 

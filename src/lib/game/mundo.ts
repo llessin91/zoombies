@@ -94,6 +94,8 @@ export interface ItemMochila {
   quantidade: number;
   durabilidade: number | null;
   peso: number;
+  /** Onde está: mochila ou depósito do abrigo (consumíveis do depósito também podem ser levados) */
+  local: 'mochila' | 'deposito';
 }
 
 export interface MundoJogador {
@@ -120,7 +122,7 @@ export async function carregarMundo(supabase: SupabaseClient): Promise<Resultado
       .eq('ativa', true)
       .order('ordem'),
     supabase.from('items').select('id, slug, nome, tipo, raridade, peso'),
-    supabase.from('inventory').select('id, item_id, quantidade, durabilidade').eq('local', 'mochila'),
+    supabase.from('inventory').select('id, item_id, quantidade, durabilidade, local'),
     supabase.from('user_shelters').select('shelter_id').eq('ativo', true).limit(1),
   ]);
 
@@ -209,7 +211,10 @@ export async function carregarMundo(supabase: SupabaseClient): Promise<Resultado
   const mochila: ItemMochila[] = (mochilaR.data ?? []).flatMap((linha) => {
     const it = itensPorId.get(linha.item_id);
     if (!it) return [];
-    return [{ id: linha.id as string, slug: it.slug, nome: it.nome, tipo: it.tipo, quantidade: linha.quantidade, durabilidade: linha.durabilidade, peso: Number(it.peso) }];
+    const local = linha.local === 'deposito' ? 'deposito' : 'mochila';
+    // Do depósito só interessam os consumíveis (armas sempre ficam na mochila)
+    if (local === 'deposito' && it.tipo !== 'consumivel') return [];
+    return [{ id: linha.id as string, slug: it.slug, nome: it.nome, tipo: it.tipo, quantidade: linha.quantidade, durabilidade: linha.durabilidade, peso: Number(it.peso), local }];
   });
 
   const abrigoLocal = locais.find((l) => l.ehAbrigo)?.slug ?? null;
