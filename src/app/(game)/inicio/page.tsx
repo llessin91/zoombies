@@ -5,6 +5,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Hammer, Hourglass, Package, Target, Warehouse } from 'lucide-react';
+import { CartaoExpedicaoAtiva } from '@/components/game/CartaoExpedicaoAtiva';
 import { CartaoPersonagem } from '@/components/game/CartaoPersonagem';
 import { FeedAcontecimentos, type Acontecimento } from '@/components/game/FeedAcontecimentos';
 import { PaginaBase } from '@/components/game/PaginaBase';
@@ -59,7 +60,7 @@ export default async function Pagina() {
         </div>
 
         <Cartao titulo="Expedição em andamento" icone={<Hourglass className="h-5 w-5 text-texto-suave" aria-hidden />} indice={3}>
-          <EstadoVazio compacto texto="Nenhuma expedição em andamento." detalhe="Expedições chegam na Fase 5." />
+          <CartaoExpedicaoAtiva />
         </Cartao>
 
         <Cartao titulo="Produção pronta" icone={<Package className="h-5 w-5 text-texto-suave" aria-hidden />} indice={4}>
