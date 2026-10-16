@@ -51,6 +51,21 @@ export const estadoPersonagemSchema = z.object({
   hora_inicial: numero,
   moral_divisor: numero,
   ferimentos: numero.default(0),
+  ferimento_maximo: numero.default(3),
+  equipamento: z
+    .record(
+      z.object({
+        inventory_id: z.string(),
+        slug: z.string(),
+        nome: z.string(),
+        raridade: z.string(),
+        durabilidade: numero.nullable(),
+        durabilidade_max: numero.nullable(),
+        bonus: numero,
+      }),
+    )
+    .default({}),
+  itens_novos: z.boolean().default(false),
   expedicao: z
     .object({ id: z.string(), estado: z.string(), missao: z.string(), termina_em: z.string(), loot_pendente: z.boolean() })
     .nullable()
