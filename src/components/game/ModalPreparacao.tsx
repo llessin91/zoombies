@@ -43,7 +43,11 @@ export function ModalPreparacao({ missao: m, nomeLocal, diasEsgotado, itens, moc
   const router = useRouter();
   const toast = useToast();
   const [enviando, setEnviando] = useState(false);
-  const [arma, setArma] = useState('');
+  // Começa com a arma equipada (principal; senão a de corpo a corpo), se ela estiver na mochila
+  const [arma, setArma] = useState(() => {
+    const eq = estado.equipamento.arma_principal ?? estado.equipamento.arma_corpo_a_corpo;
+    return eq && mochila.some((i) => i.id === eq.inventory_id && (i.durabilidade ?? 0) > 0) ? eq.inventory_id : '';
+  });
   const [consumiveis, setConsumiveis] = useState<string[]>([]);
 
   const armas = mochila.filter((i) => i.tipo === 'arma');

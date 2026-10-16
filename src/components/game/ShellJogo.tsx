@@ -40,7 +40,7 @@ export function ShellJogo({ children }: { children: React.ReactNode }) {
 
   // Bolinhas de notificação por rota: pontos para distribuir (Personagem) e expedição em andamento ou com resultado (Missões).
   // (Missão concluída, abrigo em alerta, fabricação pronta e recrutas entram nas próximas fases.)
-  const indicadores: Record<string, boolean> = { '/personagem': estado.pontos_disponiveis > 0, '/missoes': Boolean(estado.expedicao) };
+  const indicadores: Record<string, boolean> = { '/personagem': estado.pontos_disponiveis > 0, '/missoes': Boolean(estado.expedicao), '/inventario': estado.itens_novos };
   const maisAtivo = ITENS_MAIS.some((i) => ativo(i.href));
 
   async function sair() {

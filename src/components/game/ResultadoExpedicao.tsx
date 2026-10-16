@@ -14,7 +14,7 @@ import { Cartao } from '@/components/ui/Cartao';
 import { SeloRaridade, type Raridade } from '@/components/ui/Selo';
 import { pesoTotal, validarEscolhaLoot, type EstadoExpedicao } from '@/lib/game/expedicao';
 import { cn } from '@/lib/utils';
-import { IconeItem } from './IconeItem';
+import { BRILHO_RARIDADE, IconeItem } from './IconeItem';
 
 type Resultado = NonNullable<EstadoExpedicao['resultado']>;
 
@@ -24,13 +24,6 @@ const DESFECHOS = {
   fracasso: { titulo: 'Fracasso', icone: ThumbsDown, cor: 'text-acento-vermelho', borda: 'border-acento-vermelho/60', brilho: '--acento-vermelho' },
 } as const;
 
-const BRILHO_RARIDADE: Record<string, string> = {
-  comum: 'shadow-none',
-  incomum: 'shadow-[0_0_10px_rgb(var(--acento-verde)/0.45)]',
-  raro: 'shadow-[0_0_12px_rgb(var(--acento-azul)/0.55)]',
-  epico: 'shadow-[0_0_14px_rgb(var(--acento-roxo)/0.6)]',
-  lendario: 'shadow-[0_0_16px_rgb(var(--acento-ambar)/0.7)]',
-};
 
 interface Props {
   expedicao: EstadoExpedicao;

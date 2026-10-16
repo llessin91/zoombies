@@ -194,7 +194,7 @@ export function PainelAtributos() {
             <p className="mt-2 text-xs text-texto-suave">
               Moral ({moral.rotulo.toLowerCase()}): {moral.efeito} Vale para todas as missões, não para um atributo só.
             </p>
-            <p className="mt-1 text-xs text-texto-suave">Bônus de abrigo e de equipamento passam a contar nas próximas fases.</p>
+            <p className="mt-1 text-xs text-texto-suave">Armas não mudam atributos: dão bônus direto nas missões. Bônus de abrigo e instalações chegam na Fase 7.</p>
           </motion.div>
         )}
       </AnimatePresence>

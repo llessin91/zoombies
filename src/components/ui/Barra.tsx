@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-export type TomBarra = 'verde' | 'ambar' | 'vermelho' | 'azul' | 'roxo' | 'moral';
+export type TomBarra = 'verde' | 'ambar' | 'vermelho' | 'azul' | 'roxo' | 'laranja' | 'moral';
 type TomFixo = Exclude<TomBarra, 'moral'>;
 
 const FUNDO: Record<TomFixo, string> = {
@@ -12,6 +12,7 @@ const FUNDO: Record<TomFixo, string> = {
   vermelho: 'bg-acento-vermelho',
   azul: 'bg-acento-azul',
   roxo: 'bg-acento-roxo',
+  laranja: 'bg-acento-laranja',
 };
 
 const VARIAVEL: Record<TomFixo, string> = {
@@ -20,6 +21,7 @@ const VARIAVEL: Record<TomFixo, string> = {
   vermelho: '--acento-vermelho',
   azul: '--acento-azul',
   roxo: '--acento-roxo',
+  laranja: '--acento-laranja',
 };
 
 const ALTURA = { sm: 'h-1.5', md: 'h-3', lg: 'h-5' };

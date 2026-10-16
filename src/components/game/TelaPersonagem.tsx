@@ -3,7 +3,8 @@
 // src/components/game/TelaPersonagem.tsx
 // Tela Personagem: nível, XP, stamina, moral, atributos, equipamento e estatísticas.
 
-import { Crosshair, HeartPulse, Info, Star, Swords } from 'lucide-react';
+import Link from 'next/link';
+import { Bandage, Crosshair, HeartPulse, Info, Star, Swords } from 'lucide-react';
 import { Barra } from '@/components/ui/Barra';
 import { Cartao } from '@/components/ui/Cartao';
 import { ContadorRolante } from '@/components/ui/ContadorRolante';
@@ -26,9 +27,9 @@ const ESTATISTICAS = [
 ] as const;
 
 const SLOTS = [
-  { rotulo: 'Arma principal', icone: Crosshair },
-  { rotulo: 'Corpo a corpo', icone: Swords },
-];
+  { slot: 'arma_principal', rotulo: 'Arma principal', icone: Crosshair },
+  { slot: 'arma_corpo_a_corpo', rotulo: 'Corpo a corpo', icone: Swords },
+] as const;
 
 export function TelaPersonagem() {
   const { estado } = useEstadoJogo();
@@ -86,18 +87,53 @@ export function TelaPersonagem() {
           </p>
         </Cartao>
 
+        {/* Ferimentos (atrapalham as missões; curam com o tempo ou com bandagem e kit) */}
+        <Cartao indice={1}>
+          <div className="mb-1.5 flex items-center justify-between text-sm">
+            <span className="flex items-center gap-2">
+              <Bandage className="h-4 w-4 text-acento-vermelho" aria-hidden />
+              Ferimentos
+            </span>
+            <span className="font-mono">
+              {estado.ferimentos}/{estado.ferimento_maximo}
+            </span>
+          </div>
+          <Barra valor={estado.ferimentos} max={estado.ferimento_maximo} tom="vermelho" rotulo="Ferimentos" ocultarRotulo />
+          <p className="mt-1.5 text-xs text-texto-suave">
+            {estado.ferimentos === 0
+              ? 'Inteiro, por enquanto.'
+              : 'Ferido: atrapalha nas missões. Cura sozinho com o tempo, ou mais rápido com bandagem, kit ou analgésico.'}
+          </p>
+        </Cartao>
+
         {/* Equipamento: só 2 slots de arma no MVP */}
         <Cartao titulo="Equipamento" indice={3}>
           <ul className="grid grid-cols-2 gap-2">
-            {SLOTS.map(({ rotulo, icone: Icone }) => (
-              <li key={rotulo} className="flex flex-col items-center gap-1 rounded-md border border-dashed border-borda px-2 py-4 text-center">
-                <Icone className="h-6 w-6 text-texto-suave" aria-hidden />
-                <span className="text-xs text-texto-suave">{rotulo}</span>
-                <span className="text-sm">Vazio</span>
-              </li>
-            ))}
+            {SLOTS.map(({ slot, rotulo, icone: Icone }) => {
+              const eq = estado.equipamento[slot];
+              return (
+                <li
+                  key={slot}
+                  className={`flex flex-col items-center gap-1 rounded-md border px-2 py-4 text-center ${eq ? 'border-acento-laranja/50' : 'border-dashed border-borda'}`}
+                >
+                  <Icone className={`h-6 w-6 ${eq ? 'text-acento-laranja' : 'text-texto-suave'}`} aria-hidden />
+                  <span className="text-xs text-texto-suave">{rotulo}</span>
+                  <span className="text-sm">{eq ? eq.nome : 'Vazio'}</span>
+                  {eq && (
+                    <>
+                      <span className="text-xs text-texto-suave">Bônus em missões +{eq.bonus}</span>
+                      {eq.durabilidade_max ? (
+                        <Barra valor={eq.durabilidade ?? 0} max={eq.durabilidade_max} tom="laranja" altura="sm" rotulo={`Durabilidade de ${eq.nome}`} ocultarRotulo />
+                      ) : null}
+                    </>
+                  )}
+                </li>
+              );
+            })}
           </ul>
-          <p className="mt-2 text-xs text-texto-suave">Equipar armas chega na Fase 6, junto com o inventário.</p>
+          <Link href="/inventario" className="mt-2 inline-block text-sm text-acento-verde hover:underline">
+            Trocar no inventário
+          </Link>
         </Cartao>
       </div>
 
