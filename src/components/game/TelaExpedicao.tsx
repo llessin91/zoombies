@@ -6,11 +6,12 @@
 // Fechar a página não atrapalha: ao voltar, o servidor diz em que ponto está.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FastForward, MapPin } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { BookOpen, FastForward, MapPin } from 'lucide-react';
 import { CenaExpedicao } from '@/components/scenes/CenaExpedicao';
 import { Barra } from '@/components/ui/Barra';
 import { Botao } from '@/components/ui/Botao';
-import { Cartao } from '@/components/ui/Cartao';
+import { Modal } from '@/components/ui/Modal';
 import { SeloDificuldade } from '@/components/ui/Selo';
 import { useToast } from '@/components/ui/Toast';
 import { pedirAcao } from '@/lib/api/cliente';
@@ -32,7 +33,8 @@ export function TelaExpedicao({ inicial }: { inicial: EstadoExpedicao }) {
   const [erroEvento, setErroEvento] = useState<string | null>(null);
   const [pulando, setPulando] = useState(false);
   const pedindo = useRef(false);
-  const fimDoLog = useRef<HTMLLIElement>(null);
+  const [diarioAberto, setDiarioAberto] = useState(false);
+  const reduzir = useReducedMotion();
 
   const aplicar = useCallback((e: EstadoExpedicao) => {
     diferenca.current = Date.parse(e.servidor_agora) - Date.now();
@@ -133,9 +135,13 @@ export function TelaExpedicao({ inicial }: { inicial: EstadoExpedicao }) {
     .filter((l) => (l.fim ? exp.estado === 'concluida' : l.pct <= progresso + 0.0001))
     .sort((a, b) => a.pct - b.pct || Number(Boolean(a.evento)) - Number(Boolean(b.evento)));
 
-  useEffect(() => {
-    fimDoLog.current?.scrollIntoView({ block: 'nearest' });
-  }, [linhas.length]);
+  // Legenda: só o acontecimento mais recente aparece; o anterior some quando o novo chega
+  const atual = linhas[linhas.length - 1];
+  const indiceAtual = linhas.length - 1;
+  const hora = (pct: number) => {
+    const r = momento(pct);
+    return `${String(r.hora).padStart(2, '0')}:${String(r.minuto).padStart(2, '0')}`;
+  };
 
   const parada = exp.estado !== 'em_andamento';
   const segundosRestantes = Math.max(0, Math.ceil((Date.parse(exp.termina_em) - agora) / 1000));
@@ -146,13 +152,41 @@ export function TelaExpedicao({ inicial }: { inicial: EstadoExpedicao }) {
       <section aria-label="Expedição" className="overflow-hidden rounded-lg border border-borda bg-fundo-1">
         <div className="relative h-52 sm:h-64 lg:h-72">
           <CenaExpedicao regiao={exp.missao.regiao} dificuldade={exp.missao.dificuldade} parada={parada} />
-          <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2">
+          <div className="absolute left-3 right-3 top-3 flex flex-wrap items-center gap-2">
+            <span className="rounded bg-fundo-0/70 px-2 py-0.5 font-titulo text-sm tracking-wide">{exp.missao.nome}</span>
             <SeloDificuldade nivel={exp.missao.dificuldade} />
             <span className="flex items-center gap-1 rounded bg-fundo-0/70 px-2 py-0.5 text-xs">
               <MapPin className="h-3 w-3" aria-hidden />
               {exp.missao.local}
               {exp.missao.ponto && ` · ${exp.missao.ponto}`}
             </span>
+          </div>
+
+          {/* Legenda do acontecimento atual, sobre a cena */}
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/60 to-transparent px-4 pb-3 pt-10">
+            <div className="relative min-h-[3.5rem] overflow-hidden" aria-live="polite" aria-atomic="true">
+              <AnimatePresence initial={false} mode="popLayout">
+                {atual && (
+                  <motion.p
+                    key={indiceAtual}
+                    initial={reduzir ? false : { opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={reduzir ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, y: -14 }}
+                    transition={{ duration: reduzir ? 0 : 0.5, ease: 'easeOut' }}
+                    className={
+                      atual.evento
+                        ? 'border-l-2 border-acento-ambar pl-2 text-sm text-acento-ambar sm:text-base'
+                        : atual.fim
+                          ? 'border-l-2 border-acento-verde pl-2 text-sm font-medium text-texto sm:text-base'
+                          : 'text-sm text-texto sm:text-base'
+                    }
+                  >
+                    <span className="mr-2 font-mono text-xs text-texto-suave">{hora(atual.pct)}</span>
+                    {atual.texto}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
         <div className="space-y-2 p-3">
@@ -173,6 +207,11 @@ export function TelaExpedicao({ inicial }: { inicial: EstadoExpedicao }) {
                   ? 'Parado: uma decisão espera por você'
                   : `${Math.round(progresso * 100)}% · ${segundosRestantes > 0 ? `${segundosRestantes} s restantes` : 'chegando'}`}
             </span>
+            {exp.estado === 'concluida' && (
+              <Botao variante="fantasma" onClick={() => setDiarioAberto(true)} icone={<BookOpen className="h-4 w-4" aria-hidden />}>
+                Ver diário completo
+              </Botao>
+            )}
             {exp.estado === 'em_andamento' && (
               <Botao variante="fantasma" onClick={pular} carregando={pulando} icone={<FastForward className="h-4 w-4" aria-hidden />}>
                 Pular
@@ -184,23 +223,17 @@ export function TelaExpedicao({ inicial }: { inicial: EstadoExpedicao }) {
 
       {exp.estado === 'concluida' && exp.resultado && <ResultadoExpedicao expedicao={exp} aoConfirmarLoot={confirmarLoot} />}
 
-      {/* Log narrativo */}
-      <Cartao titulo={exp.missao.nome} subtitulo="Diário da expedição">
-        <ol className="max-h-72 space-y-2 overflow-y-auto pr-1" aria-live="polite">
-          {linhas.map((l, i) => {
-            const r = momento(l.pct);
-            return (
-              <li key={`${l.pct}-${i}`} className={l.evento ? 'border-l-2 border-acento-ambar/70 pl-2' : l.fim ? 'border-l-2 border-acento-verde/70 pl-2' : ''}>
-                <span className="mr-2 font-mono text-xs text-texto-suave">
-                  {String(r.hora).padStart(2, '0')}:{String(r.minuto).padStart(2, '0')}
-                </span>
-                <span className="text-sm">{l.texto}</span>
-              </li>
-            );
-          })}
-          <li ref={fimDoLog} aria-hidden />
+      {/* Diário completo: só depois que a expedição termina */}
+      <Modal aberto={diarioAberto} aoFechar={() => setDiarioAberto(false)} titulo="Diário da expedição" largura="lg">
+        <ol className="space-y-2">
+          {linhas.map((l, i) => (
+            <li key={`${l.pct}-${i}`} className={l.evento ? 'border-l-2 border-acento-ambar/70 pl-2' : l.fim ? 'border-l-2 border-acento-verde/70 pl-2' : ''}>
+              <span className="mr-2 font-mono text-xs text-texto-suave">{hora(l.pct)}</span>
+              <span className="text-sm">{l.texto}</span>
+            </li>
+          ))}
         </ol>
-      </Cartao>
+      </Modal>
 
       <EventoModal evento={exp.estado === 'aguardando_evento' ? exp.evento : null} enviando={escolhendo} erro={erroEvento} aoEscolher={escolher} />
     </div>
