@@ -2,7 +2,7 @@
 -- "do nothing": rodar de novo NÃO apaga valores que você já editou.
 
 insert into public.game_config (chave, valor, descricao, provisorio) values
-  ('tempo.dias_jogo_por_hora_real', '24', '1 hora real = 24 horas (1 dia) do jogo', true),
+  ('tempo.dias_jogo_por_hora_real', '1', 'Dias do jogo que passam a cada 1 hora real (1 = uma hora real vale um dia do jogo)', true),
   ('tempo.max_catchup_dias_producao', '30', 'Máximo de dias do jogo de produção aplicados por consulta', true),
 
   ('stamina.inicial', '20', 'Stamina inicial', true),

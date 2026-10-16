@@ -25,8 +25,8 @@ insert into public.items (slug, nome, tipo, subtipo, raridade, peso, descricao, 
   ('antidoto', 'Antídoto', 'consumivel', null, 'raro', 0.5, 'Funciona contra venenos. Contra zumbis, depende.', '{}', null, 1, true),
   ('analgesico', 'Analgésico', 'consumivel', null, 'comum', 0.5, 'A dor continua lá, só fica mais educada.', '{}', null, 1, true),
   ('kit_reparo', 'Kit de reparo', 'consumivel', null, 'incomum', 2, 'Fita, parafusos e paciência embalados juntos.', '{}', null, 1, true),
-  ('molotov', 'Molotov', 'consumivel', null, 'incomum', 1, 'Garrafa, pano e combustível. Arremessar de longe.', '{}', null, 1, true),
-  ('sinalizador', 'Sinalizador', 'consumivel', null, 'incomum', 1, 'Chama a atenção. Escolha bem de quem.', '{}', null, 1, true),
+  ('molotov', 'Molotov', 'consumivel', null, 'incomum', 1, 'Garrafa, pano e combustível. Arremessar de longe.', '{"bonus_missao":4}', null, 1, true),
+  ('sinalizador', 'Sinalizador', 'consumivel', null, 'incomum', 1, 'Chama a atenção. Escolha bem de quem.', '{"bonus_missao":2}', null, 1, true),
 
   -- Itens-chave
   ('credencial_industrial', 'Credencial industrial', 'item_chave', null, 'raro', 0, 'Abre os portões da Zona Industrial.', '{}', null, 1, false),

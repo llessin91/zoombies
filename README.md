@@ -2,13 +2,13 @@
 
 Um jogo pra provar que você conseguiria sobreviver a um mundo apocalíptico zumbi.
 
-Estado atual: **Fase 5** (expedições de verdade: cenas animadas por região, barra de progresso, diário, eventos com escolhas, resultado com saque, XP, moral, ferimentos, carga, botão Pular e retomada depois de fechar a página). Inventário completo chega na Fase 6.
+Estado atual: **Fase 6** (inventário: filtros, busca, usar, equipar, descartar, 2 slots de arma, barras de carga e depósito, raridades com brilho e itens novos destacados). Abrigo e produção chegam na Fase 7.
 
 ## Já fez uma fase anterior? Atualize assim
 
-1. **Banco**: no Supabase, **SQL Editor > New query**, cole **todo** o arquivo `supabase/atualizacao_fase5.sql` e clique em **Run**. Deve aparecer "Success". (Ele já inclui as Fases 3 e 4; pode rodar mesmo se você já rodou alguma delas.)
+1. **Banco**: no Supabase, **SQL Editor > New query**, cole **todo** o arquivo `supabase/atualizacao_fase6.sql` e clique em **Run**. Deve aparecer "Success". (Ele já inclui as Fases 3, 4 e 5; pode rodar mesmo se você já rodou alguma delas.)
 2. **Site**: suba os arquivos desta pasta de novo para o mesmo repositório do GitHub (**Add file > Upload files**, arraste tudo e confirme com **Commit changes**). Os arquivos com o mesmo nome são substituídos. A Vercel publica sozinha em 1 ou 2 minutos.
-3. Abra o jogo e siga o checklist da Fase 5 mais abaixo.
+3. Abra o jogo e siga o checklist da Fase 6 mais abaixo.
 
 Se você ainda não fez nada, siga o passo a passo completo abaixo.
 
@@ -26,7 +26,7 @@ Você precisa de três coisas: o banco (Supabase), o código no GitHub e um luga
 1. No menu esquerdo, abra **SQL Editor** e clique em **New query**.
 2. Abra o arquivo `supabase/setup_completo.sql` deste projeto, copie **tudo** e cole no editor.
 3. Clique em **Run**. Deve aparecer "Success. No rows returned".
-4. Para conferir: menu **Table Editor**. Você deve ver `regions` (4 linhas), `locations` (32), `items` (41), `building_types` (19), `shelters` (4), `missions` (65), `events` (35) e `game_config` (54).
+4. Para conferir: menu **Table Editor**. Você deve ver `regions` (4 linhas), `locations` (32), `items` (41), `building_types` (19), `shelters` (4), `missions` (65), `events` (35) e `game_config` (55).
 
 Pode rodar o arquivo de novo sem medo: ele não duplica nada e não apaga valores que você já editou em `game_config`.
 
@@ -64,6 +64,24 @@ No Supabase: **Project Settings** (engrenagem), depois **API** (ou **API Keys**)
 
 Precisa do Node.js LTS instalado pelo instalador `.msi`. Copie `.env.example` para `.env.local`, preencha, rode `npm install` e `npm run dev`, e abra http://localhost:3000.
 
+## O que testar na Fase 6 (checklist)
+
+1. Volte de uma expedição com saque. O menu **Inventário** ganha uma bolinha. Abra: os itens que acabaram de chegar aparecem com **novo** e brilho.
+2. Cada item tem borda pela raridade (comum, incomum verde, raro azul, épico roxo, lendário dourado). Armas mostram a barra de durabilidade.
+3. Use as abas (Todos, Recursos, Consumíveis, Armas, Itens-chave, Outros) e a busca (sem acento funciona: "agua" acha "Água potável").
+4. Clique num item: abre o detalhe com descrição, raridade, peso, efeitos e os botões **Usar**, **Equipar** e **Descartar**. Botões bloqueados explicam o motivo ao passar o mouse.
+5. **Usar** água, comida ou ração recupera stamina (não passa do máximo; com stamina cheia fica bloqueado). Bandagem, kit e analgésico curam ferimentos.
+6. **Equipar** uma arma: ela vai para "Arma principal" ou "Corpo a corpo" (machado, facão etc.). Arma quebrada ou de nível alto fica bloqueada. Em **Personagem** o slot mostra a arma, o bônus e a durabilidade; na preparação da missão ela já vem escolhida.
+7. **Descartar**: escolha a quantidade e confirme. Itens-chave e armas equipadas não podem ser descartados.
+8. As barras mostram o peso da mochila e o depósito (o depósito só funciona quando você tiver abrigo, na Fase 7).
+
+Para testar sem esperar o saque, dê itens a você pelo SQL Editor:
+
+```sql
+select public.entregar_itens(p.id, '[{"item":"agua_potavel","qtd":3},{"item":"bandagem","qtd":2},{"item":"glock_17","qtd":1},{"item":"facao","qtd":1}]')
+  from public.profiles p where p.nome_sobrevivente = 'SEU NOME';
+```
+
 ## O que testar na Fase 5 (checklist)
 
 1. Em **Missões**, abra uma missão da Periferia e clique em **Iniciar expedição**. A stamina cai e você vai para a tela da expedição.
@@ -76,9 +94,7 @@ Precisa do Node.js LTS instalado pelo instalador `.msi`. Copie `.env.example` pa
 8. Depois de uma expedição, o local fica **esgotado** por alguns dias do jogo (Mapa e Missões mostram).
 9. Se o saque passar da sua capacidade de carga, aparece **O que levar?**: use − e + até caber e clique em **Levar isto**.
 
-Para ver o que entrou na mochila antes da Fase 6: Supabase, **Table Editor > inventory**.
-
-Para testar com arma e molotov antes da Fase 6, dê itens a você mesmo pelo SQL Editor:
+Para testar com arma e molotov, dê itens a você mesmo pelo SQL Editor:
 
 ```sql
 insert into public.inventory (user_id, item_id, quantidade, durabilidade)
@@ -150,7 +166,7 @@ select public.ajustar_moral(id, -40, 'Teste de moral') from public.profiles wher
 
 ### Testes automáticos
 
-No Codespaces ou no computador: `npm test`. São 89 testes (desfecho total/parcial/fracasso, saque e XP por desfecho, carga e "o que levar", ferimento, desgaste da arma, opção cautelosa após 24 h, barra com pausa, fórmula de sucesso com limites 5 e 95 e efeitos de B, M, I e E, faixas, desbloqueio de regiões, esgotamento de local, carga, curva de XP, pontos por nível incluindo a troca de 3 para 2 no nível 11, stamina por tempo e teto, criação, distribuição, moral, relógio, limite de pedidos e mensagens de erro). No GitHub, cada envio roda lint, checagem de tipos e testes sozinho (aba **Actions**).
+No Codespaces ou no computador: `npm test`. São 103 testes (usar, equipar e descartar com todas as recusas, filtros e busca sem acento, desfecho total/parcial/fracasso, saque e XP por desfecho, carga e "o que levar", ferimento, desgaste da arma, opção cautelosa após 24 h, barra com pausa, fórmula de sucesso com limites 5 e 95 e efeitos de B, M, I e E, faixas, desbloqueio de regiões, esgotamento de local, carga, curva de XP, pontos por nível incluindo a troca de 3 para 2 no nível 11, stamina por tempo e teto, criação, distribuição, moral, relógio, limite de pedidos e mensagens de erro). No GitHub, cada envio roda lint, checagem de tipos e testes sozinho (aba **Actions**).
 
 ## Painel de balanceamento
 
@@ -199,6 +215,8 @@ Chaves que já valem nesta fase:
 | `armas.desgaste_por_missao` | {"facil":2,"media":3,"dificil":5,"lendaria":8} | Durabilidade perdida (dobra no fracasso) |
 | `missao.zumbis_abatidos` | combate 3–8, chefe 1, outras 0–2 | Só para as estatísticas |
 | `missao.linhas_log` | 6 | Linhas do diário por expedição |
+| `stamina.recupera_por_item` | água 1, comida enlatada 2, ração militar 3 | Stamina recuperada ao usar |
+| `itens.cura_ferimento` | bandagem 1, kit 2, analgésico 1 | Níveis de ferimento curados ao usar |
 
 Eventos: tabela `events` ou arquivo `supabase/seed/seed_events.sql` (opções, custos, requisitos, efeitos e peso no sorteio). O bônus de molotov (4) e sinalizador (2) fica em `items.efeitos` (`bonus_missao`); armas também.
 
@@ -227,12 +245,14 @@ Gancho futuro: cada personagem tem `xp_multiplier` (padrão 1.0). XP final = XP 
 - `src/app`: páginas. `(auth)` login e cadastro; `(criacao)` criação do personagem; `(game)` o jogo; `api` as ações; `auth/callback` links dos e-mails.
 - `src/components`: `ui` componentes de interface, `auth` formulários, `game` telas e peças do jogo, `scenes` cenas animadas.
 - `src/lib/game`: regras (`progressao.ts`, `stamina.ts`, `tempo.ts`, `formulas.ts`, `atributos.ts`, `missoes.ts`, `config.ts`) e `mundo.ts` (monta os dados do Mapa e das Missões). `src/lib/api`: esqueleto das ações. `src/lib/validacao`: Zod. `src/lib/supabase`: conexão.
-- `supabase/migrations`: tabelas, segurança e funções, numeradas. `supabase/seed`: conteúdo. `supabase/setup_completo.sql`: tudo junto. `supabase/atualizacao_fase5.sql`: o que mudou nas Fases 3, 4 e 5.
+- `supabase/migrations`: tabelas, segurança e funções, numeradas. `supabase/seed`: conteúdo. `supabase/setup_completo.sql`: tudo junto. `supabase/atualizacao_fase6.sql`: o que mudou nas Fases 3 a 6.
 - `tests`: testes automáticos (Vitest).
 
 ## Problemas comuns
 
-- **"Falta atualizar o banco"** ou **"O banco ainda não tem as missões desta fase"**: o site está numa fase mais nova que o Supabase. Rode `supabase/atualizacao_fase5.sql` no SQL Editor.
+- **"Falta atualizar o banco"** ou **"O banco ainda não tem as missões desta fase"**: o site está numa fase mais nova que o Supabase. Rode `supabase/atualizacao_fase6.sql` no SQL Editor.
+- **"Sua stamina já está cheia"** ou **"Você não está ferido"** ao usar um item: é proposital, para não gastar à toa.
+- **Mochila acima da capacidade**: por enquanto não atrapalha; o que conta na expedição é o que você leva e traz. Quando tiver abrigo (Fase 7), guarde no depósito.
 - **"Você já está numa expedição"**: termine (ou retome) a atual pelo botão **Retomar** em Início.
 - **"Decida o que levar da última expedição"**: abra a expedição pelo **Retomar** e escolha o que levar.
 - **Fracassos frequentes no começo**: com atributos iniciais, a chance fica perto de 50%. O tutorial (Fase 11) garante o primeiro sucesso; para ajustar o equilíbrio, mexa em `missao.formula` e `missao.dificuldade_numerica`.
