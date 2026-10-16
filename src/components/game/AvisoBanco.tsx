@@ -13,7 +13,7 @@ export function AvisoBanco({ faltaAtualizar }: { faltaAtualizar: boolean }) {
       {faltaAtualizar ? (
         <p className="text-sm text-texto-suave">
           O site está numa fase mais nova que o Supabase. Abra o <strong className="text-texto">SQL Editor</strong> do
-          Supabase, cole o arquivo <code className="font-mono text-texto">supabase/atualizacao_fase4.sql</code> e clique em{' '}
+          Supabase, cole o arquivo <code className="font-mono text-texto">supabase/atualizacao_fase5.sql</code> e clique em{' '}
           <strong className="text-texto">Run</strong>. Depois recarregue esta página.
         </p>
       ) : (

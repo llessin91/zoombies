@@ -5,6 +5,7 @@
 // carga e o botão "Iniciar expedição". As expedições em si chegam na Fase 5.
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AlertTriangle, Backpack, Flame, MapPin, UserPlus, Volume2 } from 'lucide-react';
 import { Barra } from '@/components/ui/Barra';
 import { Botao } from '@/components/ui/Botao';
@@ -14,7 +15,9 @@ import { ATRIBUTOS, type ChaveAtributo } from '@/lib/game/atributos';
 import { CATEGORIAS, formatarSegundos } from '@/lib/game/missoes';
 import type { ItemCatalogo, ItemMochila, MissaoMundo } from '@/lib/game/mundo';
 import { textoEsgotado, SeloFaixa } from './CartaoMissao';
-import { useStaminaProjetada } from './EstadoJogo';
+import { useEstadoJogo, useStaminaProjetada } from './EstadoJogo';
+import { useToast } from '@/components/ui/Toast';
+import { pedirAcao } from '@/lib/api/cliente';
 import { IconeAtributo } from './IconeAtributo';
 import { IconeItem } from './IconeItem';
 
@@ -36,13 +39,17 @@ interface Props {
 
 export function ModalPreparacao({ missao: m, nomeLocal, diasEsgotado, itens, mochila, cargaMaxima, aoFechar }: Props) {
   const stamina = useStaminaProjetada();
+  const { estado } = useEstadoJogo();
+  const router = useRouter();
+  const toast = useToast();
+  const [enviando, setEnviando] = useState(false);
   const [arma, setArma] = useState('');
   const [consumiveis, setConsumiveis] = useState<string[]>([]);
 
   const armas = mochila.filter((i) => i.tipo === 'arma');
   const usaveis = mochila.filter((i) => i.tipo === 'consumivel');
   const pesoLevado =
-    (armas.find((a) => a.slug === arma)?.peso ?? 0) + usaveis.filter((c) => consumiveis.includes(c.slug)).reduce((s, c) => s + c.peso, 0);
+    (armas.find((a) => a.id === arma)?.peso ?? 0) + usaveis.filter((c) => consumiveis.includes(c.slug)).reduce((s, c) => s + c.peso, 0);
 
   if (!m) {
     return (
@@ -62,7 +69,25 @@ export function ModalPreparacao({ missao: m, nomeLocal, diasEsgotado, itens, moc
   if (m.estado === 'bloqueada') motivo = m.motivo ?? 'Missão bloqueada';
   else if (m.estado === 'esgotada') motivo = textoEsgotado(diasEsgotado);
   else if (stamina.atual < m.custoStamina) motivo = `Stamina insuficiente (precisa de ${m.custoStamina})`;
-  else motivo = 'As expedições chegam na Fase 5';
+  else if (estado.expedicao) motivo = estado.expedicao.loot_pendente ? 'Decida o que levar da última expedição' : 'Você já está numa expedição';
+  else if (pesoLevado > cargaMaxima) motivo = 'Peso demais para levar';
+  else motivo = undefined;
+
+  async function iniciar() {
+    if (!m) return;
+    setEnviando(true);
+    const r = await pedirAcao<{ id: string }>('/api/expedicao/iniciar', {
+      missao: m.slug,
+      arma: arma || null,
+      consumiveis: consumiveis.map((item) => ({ item, qtd: 1 })),
+    });
+    if (!r.ok) {
+      setEnviando(false);
+      toast.erro('Não deu para sair', r.erro);
+      return;
+    }
+    router.push(`/expedicao/${r.dados.id}`);
+  }
 
   return (
     <Modal aberto={Boolean(m)} aoFechar={aoFechar} titulo={m.nome} largura="lg">
@@ -163,7 +188,7 @@ export function ModalPreparacao({ missao: m, nomeLocal, diasEsgotado, itens, moc
             >
               <option value="">{armas.length === 0 ? 'Nenhuma arma na mochila' : 'Sem arma'}</option>
               {armas.map((a, i) => (
-                <option key={`${a.slug}-${i}`} value={a.slug}>
+                <option key={`${a.id}-${i}`} value={a.id}>
                   {a.nome}
                   {a.durabilidade !== null ? ` (durabilidade ${a.durabilidade})` : ''}
                 </option>
@@ -216,7 +241,7 @@ export function ModalPreparacao({ missao: m, nomeLocal, diasEsgotado, itens, moc
           <Botao variante="secundario" onClick={aoFechar}>
             Voltar
           </Botao>
-          <Botao variante="acao" custoStamina={m.custoStamina} motivoDesabilitado={motivo}>
+          <Botao variante="acao" custoStamina={m.custoStamina} motivoDesabilitado={motivo} carregando={enviando} onClick={iniciar}>
             Iniciar expedição
           </Botao>
         </div>

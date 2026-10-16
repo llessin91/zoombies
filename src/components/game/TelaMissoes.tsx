@@ -10,6 +10,7 @@ import { EstadoVazio } from '@/components/ui/Estados';
 import type { Dificuldade } from '@/lib/game/config';
 import { CATEGORIAS, DIFICULDADES, type Categoria } from '@/lib/game/missoes';
 import type { MundoJogador } from '@/lib/game/mundo';
+import { CartaoExpedicaoAtiva } from './CartaoExpedicaoAtiva';
 import { CartaoMissao } from './CartaoMissao';
 import { ModalPreparacao } from './ModalPreparacao';
 
@@ -47,6 +48,7 @@ export function TelaMissoes({ mundo }: { mundo: MundoJogador }) {
 
   return (
     <div className="space-y-4">
+      <CartaoExpedicaoAtiva compacto />
       <form
         aria-label="Filtros"
         onSubmit={(e) => e.preventDefault()}

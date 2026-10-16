@@ -10,7 +10,7 @@ export function AvisoCarga({ faltaAtualizar }: { faltaAtualizar: boolean }) {
       {faltaAtualizar ? (
         <p className="max-w-md text-sm">
           O banco ainda não tem as missões desta fase. No Supabase, abra o <strong>SQL Editor</strong>, cole o arquivo{' '}
-          <code className="font-mono">supabase/atualizacao_fase4.sql</code> e clique em <strong>Run</strong>. Depois recarregue.
+          <code className="font-mono">supabase/atualizacao_fase5.sql</code> e clique em <strong>Run</strong>. Depois recarregue.
         </p>
       ) : (
         <p className="max-w-md text-sm">Não foi possível carregar o mundo agora. Recarregue a página em alguns segundos.</p>
