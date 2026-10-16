@@ -27,6 +27,10 @@ export async function middleware(request: NextRequest) {
     return redirecionamento;
   };
 
+  // Ações (api) sem sessão: responde com erro em vez de mandar para a tela de login
+  if (!user && caminho.startsWith('/api/')) {
+    return NextResponse.json({ ok: false, erro: 'Sessão expirada. Entre de novo.' }, { status: 401 });
+  }
   if (!user && !ehPublica(caminho)) return ir('/login');
   if (user && (caminho === '/login' || caminho === '/cadastro')) return ir('/inicio');
 

@@ -52,7 +52,8 @@ export function Barra({ valor, max, tom = 'verde', rotulo, ocultarRotulo = false
   const mostrarCabecalho = (rotulo && !ocultarRotulo) || mostrarValor;
 
   return (
-    <div className={cn('w-full', className)}>
+    // Largura cheia, a não ser que quem usa informe uma largura (ex.: "w-16")
+    <div className={cn(!/(^|\s)(\w+:)?w-/.test(className ?? '') && 'w-full', className)}>
       {mostrarCabecalho && (
         <div className="mb-1 flex items-center justify-between text-xs text-texto-suave">
           <span>{ocultarRotulo ? '' : rotulo}</span>

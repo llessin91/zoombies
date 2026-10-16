@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Clock, Droplets, Fuel, HeartPulse, LogOut, MoreHorizontal, Plug, Star, Wheat, Zap } from 'lucide-react';
+import { Droplets, Fuel, HeartPulse, LogOut, MoreHorizontal, Plug, Star, Wheat } from 'lucide-react';
 import { ITENS_MAIS, ITENS_MOBILE, ITENS_NAVEGACAO } from '@/lib/navegacao';
 import { Barra } from '@/components/ui/Barra';
 import { Botao } from '@/components/ui/Botao';
@@ -12,13 +12,11 @@ import { EstadoVazio } from '@/components/ui/Estados';
 import { Modal } from '@/components/ui/Modal';
 import { criarClienteNavegador } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { BarraStamina } from './BarraStamina';
+import { useEstadoJogo } from './EstadoJogo';
+import { RelogioJogo } from './RelogioJogo';
 
-// Valores fixos só para visualizar o layout. A Fase 3 troca por dados reais.
-const RESUMO_PROVISORIO = { nivel: 1, xp: 0, xpProximo: 100, stamina: 20, staminaMax: 20, moral: 70, relogio: 'Dia 1 · 08:00' };
-
-// Bolinhas de notificação por rota (missão concluída, abrigo em alerta, etc.). Vazio até as fases certas.
-const INDICADORES_PROVISORIOS: Record<string, boolean> = {};
-
+// Recursos do abrigo: valores reais chegam na Fase 7
 const RECURSOS_PROVISORIOS = [
   { rotulo: 'Comida', icone: Wheat },
   { rotulo: 'Água', icone: Droplets },
@@ -31,13 +29,18 @@ function Bolinha({ ativa }: { ativa?: boolean }) {
   return <span aria-label="Novidade" className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-acento-vermelho ring-2 ring-fundo-1" />;
 }
 
-export function ShellJogo({ children, nomeSobrevivente }: { children: React.ReactNode; nomeSobrevivente?: string }) {
+export function ShellJogo({ children }: { children: React.ReactNode }) {
   const caminho = usePathname();
   const router = useRouter();
   const [saindo, setSaindo] = useState(false);
   const [maisAberto, setMaisAberto] = useState(false);
   const ativo = (href: string) => caminho === href || caminho.startsWith(`${href}/`);
-  const r = RESUMO_PROVISORIO;
+  const { estado } = useEstadoJogo();
+  const nomeSobrevivente = estado.nome;
+
+  // Bolinhas de notificação por rota. Nesta fase: pontos para distribuir no Personagem.
+  // (Missão concluída, abrigo em alerta, fabricação pronta e recrutas entram nas próximas fases.)
+  const indicadores: Record<string, boolean> = { '/personagem': estado.pontos_disponiveis > 0 };
   const maisAtivo = ITENS_MAIS.some((i) => ativo(i.href));
 
   async function sair() {
@@ -61,36 +64,30 @@ export function ShellJogo({ children, nomeSobrevivente }: { children: React.Reac
 
       {/* Barra superior */}
       <header className="sticky top-0 z-30 border-b border-borda bg-fundo-1/95 backdrop-blur">
-        <div className="flex h-14 items-center gap-3 px-4 lg:gap-6 lg:px-6">
-          <Link href="/inicio" className="font-titulo text-xl tracking-[0.2em] text-acento-verde">
+        <div className="flex h-14 items-center gap-2 px-3 sm:gap-3 sm:px-4 lg:gap-6 lg:px-6">
+          <Link href="/inicio" className="shrink-0 font-titulo text-lg tracking-[0.12em] text-acento-verde sm:text-xl sm:tracking-[0.2em]">
             ZOMBIES
           </Link>
 
-          <div className="hidden items-center gap-2 md:flex">
-            <Star className="h-4 w-4 text-acento-roxo" aria-hidden />
-            <span className="text-sm">
-              Nível <span className="font-mono">{r.nivel}</span>
+          <div className="hidden shrink-0 items-center gap-2 md:flex">
+            <Star className="h-4 w-4 shrink-0 text-acento-roxo" aria-hidden />
+            <span className="whitespace-nowrap text-sm">
+              Nível <span className="font-mono">{estado.nivel}</span>
             </span>
-            <Barra valor={r.xp} max={r.xpProximo} tom="roxo" altura="sm" rotulo="Experiência" ocultarRotulo className="w-32" />
+            <Barra valor={estado.xp} max={estado.xp_proximo} tom="roxo" altura="sm" rotulo="Experiência" ocultarRotulo className="w-24 shrink-0 xl:w-32" />
+            <span className="hidden whitespace-nowrap font-mono text-xs text-texto-suave xl:inline">
+              {estado.xp}/{estado.xp_proximo}
+            </span>
           </div>
 
-          <div className="ml-auto flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-acento-ambar" aria-hidden />
-              <Barra valor={r.stamina} max={r.staminaMax} tom="ambar" altura="sm" brilho rotulo="Stamina" ocultarRotulo className="w-16 md:w-24" />
-              <span className="font-mono text-xs">
-                {r.stamina}/{r.staminaMax}
-              </span>
+          <div className="ml-auto flex min-w-0 items-center gap-2.5 md:gap-4">
+            <BarraStamina compacta />
+            <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+              <HeartPulse className="h-4 w-4 shrink-0 text-acento-vermelho" aria-hidden />
+              <Barra valor={estado.moral} max={100} tom="moral" altura="sm" rotulo="Moral" ocultarRotulo className="w-8 shrink-0 sm:w-12 md:w-20" />
+              <span className="font-mono text-xs">{estado.moral}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <HeartPulse className="h-4 w-4 text-acento-vermelho" aria-hidden />
-              <Barra valor={r.moral} max={100} tom="moral" altura="sm" rotulo="Moral" ocultarRotulo className="w-12 md:w-20" />
-              <span className="font-mono text-xs">{r.moral}</span>
-            </div>
-            <div className="hidden items-center gap-1.5 text-sm text-texto-suave md:flex">
-              <Clock className="h-4 w-4" aria-hidden />
-              <span className="font-mono">{r.relogio}</span>
-            </div>
+            <RelogioJogo className="hidden whitespace-nowrap md:flex" />
             <Botao
               variante="fantasma"
               carregando={saindo}
@@ -129,7 +126,7 @@ export function ShellJogo({ children, nomeSobrevivente }: { children: React.Reac
                   >
                     <Icone className="h-5 w-5" aria-hidden />
                     {rotulo}
-                    <Bolinha ativa={INDICADORES_PROVISORIOS[href]} />
+                    <Bolinha ativa={indicadores[href]} />
                   </Link>
                 </li>
               ))}
@@ -180,7 +177,7 @@ export function ShellJogo({ children, nomeSobrevivente }: { children: React.Reac
               >
                 <Icone className="h-5 w-5" aria-hidden />
                 {rotulo}
-                <Bolinha ativa={INDICADORES_PROVISORIOS[href]} />
+                <Bolinha ativa={indicadores[href]} />
               </Link>
             </li>
           ))}

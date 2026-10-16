@@ -1,16 +1,25 @@
+// src/app/(game)/layout.tsx
+// Casca do jogo. Segunda camada de proteção (o middleware é a primeira):
+// sem sessão volta ao login; sem personagem vai para a criação.
+
 import { redirect } from 'next/navigation';
+import { AvisoBanco } from '@/components/game/AvisoBanco';
+import { EstadoJogoProvider } from '@/components/game/EstadoJogo';
 import { ShellJogo } from '@/components/game/ShellJogo';
-import { criarClienteServidor } from '@/lib/supabase/server';
+import { carregarEstadoPersonagem } from '@/lib/game/carregarEstado';
 
-// Segunda camada de proteção (o middleware é a primeira): sem sessão, volta ao login
+export const dynamic = 'force-dynamic';
+
 export default async function GameLayout({ children }: { children: React.ReactNode }) {
-  const supabase = criarClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  const r = await carregarEstadoPersonagem();
 
-  const { data: perfil } = await supabase.from('profiles').select('nome_sobrevivente').eq('id', user.id).maybeSingle();
+  if (r.tipo === 'sem_sessao') redirect('/login');
+  if (r.tipo === 'sem_personagem') redirect('/criar-personagem');
+  if (r.tipo === 'erro') return <AvisoBanco faltaAtualizar={r.faltaAtualizar} />;
 
-  return <ShellJogo nomeSobrevivente={perfil?.nome_sobrevivente ?? undefined}>{children}</ShellJogo>;
+  return (
+    <EstadoJogoProvider estadoInicial={r.estado}>
+      <ShellJogo>{children}</ShellJogo>
+    </EstadoJogoProvider>
+  );
 }

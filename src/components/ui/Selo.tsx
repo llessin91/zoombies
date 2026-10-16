@@ -24,7 +24,7 @@ export function Selo({ tom = 'neutro', icone, children, className }: SeloProps) 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium leading-5',
+        'inline-flex items-center gap-1 whitespace-nowrap rounded border px-2 py-0.5 text-xs font-medium leading-5',
         TONS[tom],
         className,
       )}
