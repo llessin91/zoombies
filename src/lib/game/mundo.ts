@@ -86,6 +86,8 @@ export interface MissaoMundo {
 }
 
 export interface ItemMochila {
+  /** Linha do inventário (armas têm uma linha por unidade) */
+  id: string;
   slug: string;
   nome: string;
   tipo: ItemCatalogo['tipo'];
@@ -118,7 +120,7 @@ export async function carregarMundo(supabase: SupabaseClient): Promise<Resultado
       .eq('ativa', true)
       .order('ordem'),
     supabase.from('items').select('id, slug, nome, tipo, raridade, peso'),
-    supabase.from('inventory').select('item_id, quantidade, durabilidade').eq('local', 'mochila'),
+    supabase.from('inventory').select('id, item_id, quantidade, durabilidade').eq('local', 'mochila'),
     supabase.from('user_shelters').select('shelter_id').eq('ativo', true).limit(1),
   ]);
 
@@ -207,7 +209,7 @@ export async function carregarMundo(supabase: SupabaseClient): Promise<Resultado
   const mochila: ItemMochila[] = (mochilaR.data ?? []).flatMap((linha) => {
     const it = itensPorId.get(linha.item_id);
     if (!it) return [];
-    return [{ slug: it.slug, nome: it.nome, tipo: it.tipo, quantidade: linha.quantidade, durabilidade: linha.durabilidade, peso: Number(it.peso) }];
+    return [{ id: linha.id as string, slug: it.slug, nome: it.nome, tipo: it.tipo, quantidade: linha.quantidade, durabilidade: linha.durabilidade, peso: Number(it.peso) }];
   });
 
   const abrigoLocal = locais.find((l) => l.ehAbrigo)?.slug ?? null;

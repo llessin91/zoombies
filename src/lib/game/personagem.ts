@@ -50,6 +50,11 @@ export const estadoPersonagemSchema = z.object({
   dias_jogo_por_hora_real: numero,
   hora_inicial: numero,
   moral_divisor: numero,
+  ferimentos: numero.default(0),
+  expedicao: z
+    .object({ id: z.string(), estado: z.string(), missao: z.string(), termina_em: z.string(), loot_pendente: z.boolean() })
+    .nullable()
+    .default(null),
   servidor_agora: z.string(),
 });
 
