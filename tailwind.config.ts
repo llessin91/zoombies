@@ -34,10 +34,20 @@ const config: Config = {
           from: { backgroundPosition: '200% 0' },
           to: { backgroundPosition: '-200% 0' },
         },
+        derivaLenta: {
+          '0%': { transform: 'translateX(-14px)' },
+          '100%': { transform: 'translateX(14px)' },
+        },
+        cambalear: {
+          '0%, 100%': { transform: 'rotate(-3deg)' },
+          '50%': { transform: 'rotate(3deg) translateY(-2px)' },
+        },
       },
       animation: {
         'pulso-suave': 'pulsoSuave 2.4s ease-in-out infinite',
         shimmer: 'shimmer 2.2s linear infinite',
+        'deriva-lenta': 'derivaLenta 9s ease-in-out infinite alternate',
+        cambalear: 'cambalear 2.6s ease-in-out infinite',
       },
     },
   },

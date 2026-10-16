@@ -1,14 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Clock, Droplets, Fuel, HeartPulse, MoreHorizontal, Plug, Star, Wheat, Zap } from 'lucide-react';
+import { Clock, Droplets, Fuel, HeartPulse, LogOut, MoreHorizontal, Plug, Star, Wheat, Zap } from 'lucide-react';
 import { ITENS_MAIS, ITENS_MOBILE, ITENS_NAVEGACAO } from '@/lib/navegacao';
 import { Barra } from '@/components/ui/Barra';
+import { Botao } from '@/components/ui/Botao';
 import { Cartao } from '@/components/ui/Cartao';
 import { EstadoVazio } from '@/components/ui/Estados';
 import { Modal } from '@/components/ui/Modal';
+import { criarClienteNavegador } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 
 // Valores fixos só para visualizar o layout. A Fase 3 troca por dados reais.
@@ -29,12 +31,24 @@ function Bolinha({ ativa }: { ativa?: boolean }) {
   return <span aria-label="Novidade" className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-acento-vermelho ring-2 ring-fundo-1" />;
 }
 
-export function ShellJogo({ children }: { children: React.ReactNode }) {
+export function ShellJogo({ children, nomeSobrevivente }: { children: React.ReactNode; nomeSobrevivente?: string }) {
   const caminho = usePathname();
+  const router = useRouter();
+  const [saindo, setSaindo] = useState(false);
   const [maisAberto, setMaisAberto] = useState(false);
   const ativo = (href: string) => caminho === href || caminho.startsWith(`${href}/`);
   const r = RESUMO_PROVISORIO;
   const maisAtivo = ITENS_MAIS.some((i) => ativo(i.href));
+
+  async function sair() {
+    setSaindo(true);
+    try {
+      await criarClienteNavegador().auth.signOut();
+    } finally {
+      router.replace('/login');
+      router.refresh();
+    }
+  }
 
   return (
     <div className="relative z-10 flex min-h-dvh flex-col">
@@ -77,6 +91,15 @@ export function ShellJogo({ children }: { children: React.ReactNode }) {
               <Clock className="h-4 w-4" aria-hidden />
               <span className="font-mono">{r.relogio}</span>
             </div>
+            <Botao
+              variante="fantasma"
+              carregando={saindo}
+              onClick={sair}
+              icone={<LogOut className="h-4 w-4" aria-hidden />}
+              className="hidden lg:inline-flex"
+            >
+              Sair
+            </Botao>
           </div>
         </div>
       </header>
@@ -85,6 +108,12 @@ export function ShellJogo({ children }: { children: React.ReactNode }) {
         {/* Menu lateral (desktop) */}
         <aside className="hidden w-56 shrink-0 border-r border-borda bg-fundo-1/50 lg:block">
           <nav aria-label="Principal" className="sticky top-14 p-2">
+            {nomeSobrevivente && (
+              <p className="mb-2 border-b border-borda px-3 pb-3 text-xs text-texto-suave">
+                Sobrevivente
+                <span className="block truncate text-sm text-texto">{nomeSobrevivente}</span>
+              </p>
+            )}
             <ul className="space-y-1">
               {ITENS_NAVEGACAO.map(({ href, rotulo, icone: Icone }) => (
                 <li key={href}>
@@ -173,6 +202,11 @@ export function ShellJogo({ children }: { children: React.ReactNode }) {
       </nav>
 
       <Modal aberto={maisAberto} aoFechar={() => setMaisAberto(false)} titulo="Mais">
+        {nomeSobrevivente && (
+          <p className="mb-3 text-xs text-texto-suave">
+            Sobrevivente: <span className="text-sm text-texto">{nomeSobrevivente}</span>
+          </p>
+        )}
         <ul className="grid grid-cols-2 gap-2">
           {ITENS_MAIS.map(({ href, rotulo, icone: Icone }) => (
             <li key={href}>
@@ -187,6 +221,15 @@ export function ShellJogo({ children }: { children: React.ReactNode }) {
             </li>
           ))}
         </ul>
+        <Botao
+          variante="secundario"
+          carregando={saindo}
+          onClick={sair}
+          icone={<LogOut className="h-4 w-4" aria-hidden />}
+          className="mt-3 w-full"
+        >
+          Sair da conta
+        </Botao>
       </Modal>
     </div>
   );
