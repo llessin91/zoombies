@@ -2,13 +2,15 @@
 
 Um jogo pra provar que você conseguiria sobreviver a um mundo apocalíptico zumbi.
 
-Estado atual: **Fase 6** (inventário: filtros, busca, usar, equipar, descartar, 2 slots de arma, barras de carga e depósito, raridades com brilho e itens novos destacados). Abrigo e produção chegam na Fase 7.
+Estado atual: **Fase 7** (abrigo: escolha do abrigo inicial, planta com espaços, construir, melhorar, coletar, reparar e desmontar instalações, produção passiva, depósito, gerador, energia, combustível, manutenção e reciclagem). Recrutas chegam na Fase 8.
 
 ## Já fez uma fase anterior? Atualize assim
 
-1. **Banco**: no Supabase, **SQL Editor > New query**, cole **todo** o arquivo `supabase/atualizacao_fase6.sql` e clique em **Run**. Deve aparecer "Success". (Ele já inclui as Fases 3, 4 e 5; pode rodar mesmo se você já rodou alguma delas.)
+1. **Banco**: no Supabase, **SQL Editor > New query**, cole **todo** o arquivo `supabase/atualizacao_fase7.sql` e clique em **Run**. Deve aparecer "Success". (Ele já inclui as Fases 3 a 6; pode rodar mesmo se você já rodou alguma delas.)
 2. **Site**: suba os arquivos desta pasta de novo para o mesmo repositório do GitHub (**Add file > Upload files**, arraste tudo e confirme com **Commit changes**). Os arquivos com o mesmo nome são substituídos. A Vercel publica sozinha em 1 ou 2 minutos.
-3. Abra o jogo e siga o checklist da Fase 6 mais abaixo.
+3. Abra o jogo e siga o checklist da Fase 7 mais abaixo.
+
+O arquivo `supabase/atualizacao_fase6.sql` foi substituído pelo da Fase 7. Se ele ainda estiver no seu GitHub, pode apagar (não faz mal deixar).
 
 Se você ainda não fez nada, siga o passo a passo completo abaixo.
 
@@ -63,6 +65,37 @@ No Supabase: **Project Settings** (engrenagem), depois **API** (ou **API Keys**)
 ### Passo 5C: rodar no seu computador (opcional)
 
 Precisa do Node.js LTS instalado pelo instalador `.msi`. Copie `.env.example` para `.env.local`, preencha, rode `npm install` e `npm run dev`, e abra http://localhost:3000.
+
+## O que testar na Fase 7 (checklist)
+
+1. Abra **Abrigo**. Aparecem 4 abrigos com espaços, vantagens e desvantagens (com números). Clique em **Ver detalhes** e depois em **Escolher este**: a confirmação diz "Esta escolha vale enquanto você mantiver este abrigo.". Confirme.
+2. A tela vira a **planta**: espaços livres com "+", painel de **Depósito**, **Energia**, **Defesa/Ameaça** e a lista de alertas. No painel da direita (tela larga), **Recursos** passa a mostrar comida, água, combustível e energia de verdade.
+3. Escolheu o **Porão da mercearia**? O depósito já vem com 5 de cada recurso básico e 5 de comida e água. As missões custam +1 de stamina até você construir a **Saída reforçada**.
+4. Clique num espaço livre (ou em **Construir**): o catálogo separa Produção, Energia e Estruturais. O custo fica **verde** quando você tem e **vermelho** quando falta. Botão bloqueado explica o motivo (ex.: "Requer Engenharia 6").
+5. Construa a **Captação de água**: o espaço mostra faixas de obra andando e a contagem regressiva (1 dia do jogo = 1 hora real). Quando termina, o ícone aparece sozinho.
+6. Volte depois de algumas horas: o espaço mostra **+N** pulando. **Coletar tudo** (no abrigo ou no cartão **Produção pronta** do Início) leva tudo para o depósito.
+7. Clique numa instalação: detalhe com produção, manutenção, efeitos, **Coletar**, **Melhorar** (Horta pequena → Horta grande, Residência), **Reparar** (quando danificada) e **Desmontar** (só nas desmontáveis; devolve metade).
+8. **Gerador básico**: com combustível no depósito, gasta 1 a cada 5 dias do jogo. Sem combustível, a energia some, as instalações elétricas param (o ícone fica apagado) e aparece o alerta.
+9. **Galinheiro** sem comida no depósito para no ciclo de manutenção ("Parada").
+10. Depósito cheio: a produção para e o loot que não cabe vai para a mochila. Armas sempre vão para a mochila.
+11. **Inventário**: abas Tudo / Mochila / Depósito, selo de onde o item está e o botão **Guardar no depósito** / **Levar para a mochila**.
+12. **Personagem > Ver bônus totais**: a coluna **Abrigo** mostra os bônus de Área de treinamento (+1 Força, +1 Agilidade), Oficina (+1 Engenharia) e Enfermaria (+1 Medicina, só com energia).
+13. Na preparação da missão, bandagens e molotovs do **depósito** também aparecem para levar.
+
+Para testar sem esperar o tempo passar, adiante o relógio do seu abrigo pelo SQL Editor (troque SEU NOME):
+
+```sql
+-- Termina todas as obras e "volta" 5 dias do jogo (5 horas reais)
+update public.user_buildings ub set concluido_em = now() - interval '5 hours'
+  from public.user_shelters us join public.profiles p on p.id = us.user_id
+ where ub.user_shelter_id = us.id and p.nome_sobrevivente = 'SEU NOME' and ub.estado = 'construindo';
+update public.user_shelters us set ultimo_tick_em = now() - interval '5 hours'
+  from public.profiles p where p.id = us.user_id and p.nome_sobrevivente = 'SEU NOME';
+
+-- Dá material para construir
+select public.entregar_itens(p.id, '[{"item":"madeira","qtd":20},{"item":"metal","qtd":10},{"item":"sucata","qtd":10},{"item":"pecas_mecanicas","qtd":6},{"item":"combustivel","qtd":3}]')
+  from public.profiles p where p.nome_sobrevivente = 'SEU NOME';
+```
 
 ## O que testar na Fase 6 (checklist)
 
@@ -217,6 +250,15 @@ Chaves que já valem nesta fase:
 | `missao.linhas_log` | 6 | Linhas do diário por expedição |
 | `stamina.recupera_por_item` | água 1, comida enlatada 2, ração militar 3 | Stamina recuperada ao usar |
 | `itens.cura_ferimento` | bandagem 1, kit 2, analgésico 1 | Níveis de ferimento curados ao usar |
+| `deposito.capacidade_inicial` | 100 | Capacidade do depósito (cada instalação Depósito soma +50) |
+| `abrigo.recursos_basicos` | madeira, sucata, metal, tecido, peças, vidro, plástico, fios | O que o Porão da mercearia dá ao começar |
+| `abrigo.desmontar_reembolso_pct` | 50 | % do custo devolvido ao desmontar |
+| `abrigo.reparo_custo_pct` | 25 | % do custo para reparar uma instalação danificada |
+| `abrigo.alerta_combustivel_dias` | 3 | Alerta quando o combustível durar menos que isso |
+| `abrigo.alerta_deposito_pct` | 90 | Alerta de depósito quase cheio |
+| `abrigo.max_dias_catchup_consumo` | 3650 | Limite de segurança do cálculo de consumo |
+
+Instalações: tabela `building_types` ou arquivo `supabase/seed/seed_buildings.sql`: `custo`, `requisitos`, `tempo_construcao_dias`, `niveis` (Residência e Horta), `producao` (item e `ciclo_dias`), `manutencao` (item e `a_cada_ciclos`), `consumo_energia` e `efeitos` (bônus de atributo, defesa, energia dos geradores e do painel, dias por combustível). A produção é calculada por catch-up: só os primeiros 30 dias desde a última visita contam. Abrigos iniciais: tabela `shelters` (espaços, vantagens e desvantagens).
 
 Eventos: tabela `events` ou arquivo `supabase/seed/seed_events.sql` (opções, custos, requisitos, efeitos e peso no sorteio). O bônus de molotov (4) e sinalizador (2) fica em `items.efeitos` (`bonus_missao`); armas também.
 
@@ -228,7 +270,7 @@ Outros números provisórios ficam no catálogo:
 
 Atenção: rodar `seed_missions.sql`, `seed_events.sql` (ou o setup completo, ou o arquivo de atualização) de novo **volta missões e eventos ao padrão do arquivo**. Se editar missões pelo Table Editor, edite também o arquivo.
 
-As demais chaves (recrutas, energia, ataques, fabricação) passam a valer nas fases seguintes. Personagens já criados não mudam se você alterar valores de criação.
+As demais chaves (recrutas, ataques, fabricação) passam a valer nas fases seguintes. As chaves `energia.*` do `game_config` são só referência: o que vale é o `efeitos` de cada gerador em `building_types`. Personagens já criados não mudam se você alterar valores de criação.
 
 Gancho futuro: cada personagem tem `xp_multiplier` (padrão 1.0). XP final = XP base × multiplicador. Não há tela para isso, de propósito.
 
@@ -244,15 +286,20 @@ Gancho futuro: cada personagem tem `xp_multiplier` (padrão 1.0). XP final = XP 
 
 - `src/app`: páginas. `(auth)` login e cadastro; `(criacao)` criação do personagem; `(game)` o jogo; `api` as ações; `auth/callback` links dos e-mails.
 - `src/components`: `ui` componentes de interface, `auth` formulários, `game` telas e peças do jogo, `scenes` cenas animadas.
-- `src/lib/game`: regras (`progressao.ts`, `stamina.ts`, `tempo.ts`, `formulas.ts`, `atributos.ts`, `missoes.ts`, `config.ts`) e `mundo.ts` (monta os dados do Mapa e das Missões). `src/lib/api`: esqueleto das ações. `src/lib/validacao`: Zod. `src/lib/supabase`: conexão.
-- `supabase/migrations`: tabelas, segurança e funções, numeradas. `supabase/seed`: conteúdo. `supabase/setup_completo.sql`: tudo junto. `supabase/atualizacao_fase6.sql`: o que mudou nas Fases 3 a 6.
+- `src/lib/game`: regras (`progressao.ts`, `stamina.ts`, `tempo.ts`, `formulas.ts`, `atributos.ts`, `missoes.ts`, `inventario.ts`, `abrigo.ts`, `config.ts`) e `mundo.ts` (monta os dados do Mapa e das Missões). `src/lib/api`: esqueleto das ações. `src/lib/validacao`: Zod. `src/lib/supabase`: conexão.
+- `supabase/migrations`: tabelas, segurança e funções, numeradas. `supabase/seed`: conteúdo. `supabase/setup_completo.sql`: tudo junto. `supabase/atualizacao_fase7.sql`: o que mudou nas Fases 3 a 7.
 - `tests`: testes automáticos (Vitest).
 
 ## Problemas comuns
 
-- **"Falta atualizar o banco"** ou **"O banco ainda não tem as missões desta fase"**: o site está numa fase mais nova que o Supabase. Rode `supabase/atualizacao_fase6.sql` no SQL Editor.
+- **"Falta atualizar o banco"** ou **"O banco ainda não tem as missões desta fase"**: o site está numa fase mais nova que o Supabase. Rode `supabase/atualizacao_fase7.sql` no SQL Editor.
 - **"Sua stamina já está cheia"** ou **"Você não está ferido"** ao usar um item: é proposital, para não gastar à toa.
-- **Mochila acima da capacidade**: por enquanto não atrapalha; o que conta na expedição é o que você leva e traz. Quando tiver abrigo (Fase 7), guarde no depósito.
+- **Mochila acima da capacidade**: por enquanto não atrapalha; o que conta na expedição é o que você leva e traz. Guarde o excesso no depósito pelo Inventário.
+- **"Não cabe no depósito"** ou produção parada: o depósito encheu. Use, transfira para a mochila ou construa a instalação **Depósito** (+50).
+- **Instalação "Sem energia"**: falta gerador, ou o gerador ficou sem combustível no depósito. Traga combustível (missões de coleta de combustível ou Destilaria) ou construa o Painel solar.
+- **Instalação "Parada"**: faltou o item da manutenção (ex.: comida para o Galinheiro). Ela volta sozinha no próximo ciclo em que houver estoque.
+- **A obra não termina na hora certa**: a contagem usa o relógio do servidor. Se o seu computador estiver com a hora errada, a contagem na tela pode parecer adiantada ou atrasada, mas a obra termina no horário certo; recarregue a página.
+- **"Você já escolheu um abrigo"**: a escolha é uma vez só. Mudar de abrigo chega na Fase 10.
 - **"Você já está numa expedição"**: termine (ou retome) a atual pelo botão **Retomar** em Início.
 - **"Decida o que levar da última expedição"**: abra a expedição pelo **Retomar** e escolha o que levar.
 - **Fracassos frequentes no começo**: com atributos iniciais, a chance fica perto de 50%. O tutorial (Fase 11) garante o primeiro sucesso; para ajustar o equilíbrio, mexa em `missao.formula` e `missao.dificuldade_numerica`.

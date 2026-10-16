@@ -26,6 +26,8 @@ const config: Config = {
         mono: ['var(--fonte-mono)', 'ui-monospace', 'monospace'],
       },
       keyframes: {
+        // Faixas de obra andando (abrigo)
+        faixas: { from: { backgroundPosition: '0 0' }, to: { backgroundPosition: '28px 0' } },
         pulsoSuave: {
           '0%, 100%': { boxShadow: '0 0 0 0 rgb(var(--acento-verde) / 0)' },
           '50%': { boxShadow: '0 0 18px 2px rgb(var(--acento-verde) / 0.35)' },

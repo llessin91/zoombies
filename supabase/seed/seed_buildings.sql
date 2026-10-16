@@ -1,5 +1,6 @@
 -- Instalações do abrigo. Custos, tempos e efeitos de defesa são PROVISÓRIOS (exceto os que o prompt
 -- define: residências, produção passiva, energia e consumo). Ajuste aqui.
+-- Produção e manutenção usam os slugs dos itens (comida_enlatada, agua_potavel, combustivel...).
 -- Colunas: slug, nome, categoria, descricao, custo, requisitos, tempo_construcao_dias, niveis, producao,
 --          manutencao, consumo_energia, efeitos, desmontavel, ordem
 
@@ -46,24 +47,24 @@ values
   -- Produção (valores de produção e manutenção definidos no prompt; chance_extra_pct é provisória)
   ('horta', 'Horta', 'producao', 'Terra, água e a paciência de quem acredita no amanhã.',
    '{"madeira":4}', '{"espaco_externo":true,"agua":true}', 1,
-   '[{"nivel":1,"nome":"Horta pequena","custo":{"madeira":4},"requisitos":{"espaco_externo":true,"agua":true},"producao":{"comida":1,"ciclo_dias":2},"manutencao":{"agua":1,"a_cada_ciclos":3}},
-     {"nivel":2,"nome":"Horta grande","custo":{"madeira":6,"metal":2},"requisitos":{"engenharia":4},"producao":{"comida":2,"ciclo_dias":2,"extra":1,"chance_extra_pct":25},"manutencao":{"agua":1,"a_cada_ciclos":2}}]',
-   '{"comida":1,"ciclo_dias":2}', '{"agua":1,"a_cada_ciclos":3}', 0, '{}', false, 14),
+   '[{"nivel":1,"nome":"Horta pequena","custo":{"madeira":4},"requisitos":{"espaco_externo":true,"agua":true},"producao":{"comida_enlatada":1,"ciclo_dias":2},"manutencao":{"agua_potavel":1,"a_cada_ciclos":3}},
+     {"nivel":2,"nome":"Horta grande","custo":{"madeira":6,"metal":2},"requisitos":{"engenharia":4},"producao":{"comida_enlatada":2,"ciclo_dias":2,"extra":1,"chance_extra_pct":25},"manutencao":{"agua_potavel":1,"a_cada_ciclos":2}}]',
+   '{"comida_enlatada":1,"ciclo_dias":2}', '{"agua_potavel":1,"a_cada_ciclos":3}', 0, '{}', false, 14),
   ('captacao_agua', 'Captação de água', 'producao', 'Calhas, funil e fé na chuva.',
    '{"plastico":3,"sucata":2}', '{"chuva":true}', 1, '[]',
-   '{"agua":1,"ciclo_dias":1}', '{}', 0, '{}', false, 15),
+   '{"agua_potavel":1,"ciclo_dias":1}', '{}', 0, '{}', false, 15),
   ('galinheiro', 'Galinheiro', 'producao', 'Ovos como moeda, penas como consequência.',
    '{"madeira":2}', '{}', 1, '[]',
-   '{"comida":1,"ciclo_dias":1}', '{"comida":1,"a_cada_ciclos":5}', 0, '{}', false, 16),
+   '{"comida_enlatada":1,"ciclo_dias":1}', '{"comida_enlatada":1,"a_cada_ciclos":5}', 0, '{}', false, 16),
   ('armadilha_caca', 'Armadilha de caça', 'producao', 'Cordas, arame e um pouco de crueldade necessária.',
    '{"sucata":3,"madeira":2}', '{"percepcao":3}', 1, '[]',
-   '{"comida":1,"ciclo_dias":3}', '{"sucata":1,"a_cada_ciclos":4}', 0, '{}', false, 17),
+   '{"comida_enlatada":1,"ciclo_dias":3}', '{"sucata":1,"a_cada_ciclos":4}', 0, '{}', false, 17),
   ('oficina_reciclagem', 'Oficina de reciclagem', 'producao', 'Transforma lixo em coisas menos lixo.',
    '{"metal":6,"pecas_mecanicas":4}', '{"instalacao":"oficina","engenharia":5}', 2, '[]',
    '{"conversoes":{"sucata_para_metal":3,"sucata_para_componentes":5},"modo":"manual_instantaneo"}', '{}', 1, '{}', false, 18),
   ('destilaria', 'Destilaria improvisada', 'producao', 'Cheiro péssimo, resultado inflamável.',
    '{"metal":8,"pecas_mecanicas":4,"vidro":4}', '{"engenharia":6}', 3, '[]',
-   '{"combustivel":1,"ciclo_dias":5}', '{"comida":2,"agua":2,"a_cada_ciclos":1}', 1, '{}', false, 19)
+   '{"combustivel":1,"ciclo_dias":5}', '{"comida_enlatada":2,"agua_potavel":2,"a_cada_ciclos":1}', 1, '{}', false, 19)
 on conflict (slug) do update set
   nome = excluded.nome, categoria = excluded.categoria, descricao = excluded.descricao, custo = excluded.custo,
   requisitos = excluded.requisitos, tempo_construcao_dias = excluded.tempo_construcao_dias, niveis = excluded.niveis,
