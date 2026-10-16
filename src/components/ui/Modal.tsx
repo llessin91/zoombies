@@ -14,9 +14,11 @@ interface ModalProps {
   children: ReactNode;
   /** Modal crítico: não fecha com ESC nem clicando fora, e não mostra o X */
   critico?: boolean;
+  /** Largura máxima: md (padrão) ou lg */
+  largura?: 'md' | 'lg';
 }
 
-export function Modal({ aberto, aoFechar, titulo, children, critico = false }: ModalProps) {
+export function Modal({ aberto, aoFechar, titulo, children, critico = false, largura = 'md' }: ModalProps) {
   const [montado, setMontado] = useState(false);
   const caixa = useRef<HTMLDivElement>(null);
   const fecharRef = useRef(aoFechar);
@@ -88,7 +90,7 @@ export function Modal({ aberto, aoFechar, titulo, children, critico = false }: M
             aria-modal="true"
             aria-labelledby={tituloId}
             tabIndex={-1}
-            className="w-full max-w-md rounded-lg border border-borda bg-fundo-1 p-5 shadow-2xl outline-none"
+            className={`max-h-[90dvh] w-full overflow-y-auto rounded-lg border border-borda bg-fundo-1 p-5 shadow-2xl outline-none ${largura === 'lg' ? 'max-w-2xl' : 'max-w-md'}`}
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}

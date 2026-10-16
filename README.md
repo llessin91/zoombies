@@ -2,13 +2,13 @@
 
 Um jogo pra provar que você conseguiria sobreviver a um mundo apocalíptico zumbi.
 
-Estado atual: **Fase 3** (personagem: criação, atributos, XP, níveis, pontos, moral e stamina). Mapa e missões chegam na Fase 4.
+Estado atual: **Fase 4** (mapa, regiões, 32 locais, 65 missões, desbloqueios, tela Missões com filtros e preparação, esgotamento de local). As expedições de verdade chegam na Fase 5.
 
-## Já fez a Fase 2? Atualize assim
+## Já fez a Fase 2 ou a Fase 3? Atualize assim
 
-1. **Banco**: no Supabase, **SQL Editor > New query**, cole **todo** o arquivo `supabase/atualizacao_fase3.sql` e clique em **Run**. Deve aparecer "Success".
+1. **Banco**: no Supabase, **SQL Editor > New query**, cole **todo** o arquivo `supabase/atualizacao_fase4.sql` e clique em **Run**. Deve aparecer "Success". (Ele já inclui a Fase 3; pode rodar mesmo se você já rodou a Fase 3.)
 2. **Site**: suba os arquivos desta pasta de novo para o mesmo repositório do GitHub (**Add file > Upload files**, arraste tudo e confirme com **Commit changes**). Os arquivos com o mesmo nome são substituídos. A Vercel publica sozinha em 1 ou 2 minutos.
-3. Abra o jogo e siga o checklist da Fase 3 mais abaixo.
+3. Abra o jogo e siga o checklist da Fase 4 mais abaixo.
 
 Se você ainda não fez nada, siga o passo a passo completo abaixo.
 
@@ -26,7 +26,7 @@ Você precisa de três coisas: o banco (Supabase), o código no GitHub e um luga
 1. No menu esquerdo, abra **SQL Editor** e clique em **New query**.
 2. Abra o arquivo `supabase/setup_completo.sql` deste projeto, copie **tudo** e cole no editor.
 3. Clique em **Run**. Deve aparecer "Success. No rows returned".
-4. Para conferir: menu **Table Editor**. Você deve ver `regions` (4 linhas), `locations` (32), `items` (41), `building_types` (19), `shelters` (4) e `game_config` (43).
+4. Para conferir: menu **Table Editor**. Você deve ver `regions` (4 linhas), `locations` (32), `items` (41), `building_types` (19), `shelters` (4), `missions` (65) e `game_config` (44).
 
 Pode rodar o arquivo de novo sem medo: ele não duplica nada e não apaga valores que você já editou em `game_config`.
 
@@ -63,6 +63,27 @@ No Supabase: **Project Settings** (engrenagem), depois **API** (ou **API Keys**)
 ### Passo 5C: rodar no seu computador (opcional)
 
 Precisa do Node.js LTS instalado pelo instalador `.msi`. Copie `.env.example` para `.env.local`, preencha, rode `npm install` e `npm run dev`, e abra http://localhost:3000.
+
+## O que testar na Fase 4 (checklist)
+
+1. Abra **Missões**. Aparecem 65 cartões com nome, local, dificuldade colorida, custo de stamina, duração, XP e ícones do que pode render.
+2. Missões da Periferia e do Centro (se você tiver nível 4) mostram uma faixa: **Segura**, **Equilibrada**, **Arriscada** ou **Muito arriscada**. Nunca aparece número.
+3. Missões da Zona Industrial e Militar mostram o cadeado e o motivo (ex.: "requer nível 8 e credencial industrial").
+4. Use os filtros: região, dificuldade, categoria e **Somente disponíveis**. Com filtros que não acham nada, aparece "Limpar filtros".
+5. Categoria **Coleta de combustível**: 9 missões, incluindo **Saquear as bombas do posto** (Posto de gasolina, no Terminal do Bairro Novo).
+6. Clique numa missão: abre a preparação com a história, as barras de peso dos atributos, o que pode render, os riscos, arma e consumíveis (vazios até a Fase 6), a carga e o botão **Iniciar expedição** (desabilitado: passe o mouse para ver o motivo).
+7. Abra **Mapa**: 4 regiões; as bloqueadas têm névoa e cadeado com o requisito. Clique numa região para ver os locais, as dificuldades e o estado.
+8. Teste o **esgotamento de local** pelo SQL Editor (veja abaixo): o local fica âmbar no mapa e as missões dele mostram "Esgotado, volta em 3 dias do jogo".
+
+Esgotar um local (como se você tivesse acabado de saquear a Oficina Dois Irmãos):
+
+```sql
+select public.aplicar_cooldown_local(p.id, l.id, 'facil')
+  from public.profiles p, public.locations l
+ where p.nome_sobrevivente = 'SEU NOME' and l.slug = 'oficina_dois_irmaos';
+```
+
+Para liberar de novo: `delete from public.location_cooldowns;`
 
 ## O que testar na Fase 3 (checklist)
 
@@ -102,7 +123,7 @@ select public.ajustar_moral(id, -40, 'Teste de moral') from public.profiles wher
 
 ### Testes automáticos
 
-No Codespaces ou no computador: `npm test`. São 49 testes (curva de XP, pontos por nível incluindo a troca de 3 para 2 no nível 11, stamina por tempo e teto, criação, distribuição, moral, relógio, limite de pedidos e mensagens de erro). No GitHub, cada envio roda lint, checagem de tipos e testes sozinho (aba **Actions**).
+No Codespaces ou no computador: `npm test`. São 67 testes (fórmula de sucesso com limites 5 e 95 e efeitos de B, M, I e E, faixas, desbloqueio de regiões, esgotamento de local, carga, curva de XP, pontos por nível incluindo a troca de 3 para 2 no nível 11, stamina por tempo e teto, criação, distribuição, moral, relógio, limite de pedidos e mensagens de erro). No GitHub, cada envio roda lint, checagem de tipos e testes sozinho (aba **Actions**).
 
 ## Painel de balanceamento
 
@@ -130,8 +151,24 @@ Chaves que já valem nesta fase:
 | `xp.ultimo_nivel_com_mais_pontos` | 10 | Último nível que ainda dá os pontos maiores |
 | `tempo.dias_jogo_por_hora_real` | 1 | Dias do jogo por hora real (1 = cada hora real é um dia) |
 | `tempo.hora_inicial` | 8 | Hora do relógio quando o personagem nasce |
+| `stamina.custo_por_dificuldade` | {"facil":2,"media":3,"dificil":5,"lendaria":6} | Stamina para sair em missão |
+| `missao.formula` | base 50, peso 5, mínimo 5, máximo 95 | Fórmula P = 50 + (H − D) × 5 + B + M − I + E, entre 5 e 95 |
+| `missao.dificuldade_numerica` | {"facil":3,"media":6,"dificil":10,"lendaria":14} | D da fórmula |
+| `missao.faixas_chance` | {"segura":70,"equilibrada":45,"arriscada":25} | Chance mínima de cada faixa mostrada ao jogador |
+| `missao.duracao_segundos` | {"facil":30,"media":60,"dificil":90,"lendaria":120} | Duração real da expedição |
+| `missao.xp_base` | {"facil":20,"media":45,"dificil":90,"lendaria":160} | XP por dificuldade |
+| `missao.cooldown_local_dias` | {"facil":3,"media":5,"dificil":8,"lendaria":12} | Dias do jogo que o local fica esgotado depois de saqueado |
+| `carga.base` / `carga.por_ponto_forca` | 10 / 2 | Capacidade de carga = 10 + Força × 2 |
 
-As demais chaves (missões, eventos, carga, recrutas, energia, ataques, fabricação) passam a valer nas fases seguintes. Personagens já criados não mudam se você alterar valores de criação.
+Outros números provisórios ficam no catálogo:
+
+- **Regiões** (tabela `regions`): `nivel_minimo` (Periferia 1, Centro 4, Industrial 8, Militar 12) e `item_acesso_slug` (item-chave exigido).
+- **Missões** (tabela `missions` ou arquivo `supabase/seed/seed_missions.sql`): `pesos` dos atributos (somam 100), `loot` (chance %, mínimo e máximo de cada item), `requisitos` (nível, itens). Para dar custo, duração ou XP diferente a UMA missão, preencha `custo_stamina`, `duracao_segundos` ou `xp_base` dela (vazio = usa o da dificuldade).
+- **Locais** (tabela `locations`): `cooldown_dias` (vazio = usa o da dificuldade).
+
+Atenção: rodar `seed_missions.sql` (ou o setup completo) de novo **volta as missões ao padrão do arquivo**. Se editar missões pelo Table Editor, edite também o arquivo.
+
+As demais chaves (eventos, recrutas, energia, ataques, fabricação) passam a valer nas fases seguintes. Personagens já criados não mudam se você alterar valores de criação.
 
 Gancho futuro: cada personagem tem `xp_multiplier` (padrão 1.0). XP final = XP base × multiplicador. Não há tela para isso, de propósito.
 
@@ -147,13 +184,14 @@ Gancho futuro: cada personagem tem `xp_multiplier` (padrão 1.0). XP final = XP 
 
 - `src/app`: páginas. `(auth)` login e cadastro; `(criacao)` criação do personagem; `(game)` o jogo; `api` as ações; `auth/callback` links dos e-mails.
 - `src/components`: `ui` componentes de interface, `auth` formulários, `game` telas e peças do jogo, `scenes` cenas animadas.
-- `src/lib/game`: regras (`progressao.ts`, `stamina.ts`, `tempo.ts`, `formulas.ts`, `atributos.ts`, `config.ts`). `src/lib/api`: esqueleto das ações. `src/lib/validacao`: Zod. `src/lib/supabase`: conexão.
-- `supabase/migrations`: tabelas, segurança e funções, numeradas. `supabase/seed`: conteúdo. `supabase/setup_completo.sql`: tudo junto. `supabase/atualizacao_fase3.sql`: só o que mudou na Fase 3.
+- `src/lib/game`: regras (`progressao.ts`, `stamina.ts`, `tempo.ts`, `formulas.ts`, `atributos.ts`, `missoes.ts`, `config.ts`) e `mundo.ts` (monta os dados do Mapa e das Missões). `src/lib/api`: esqueleto das ações. `src/lib/validacao`: Zod. `src/lib/supabase`: conexão.
+- `supabase/migrations`: tabelas, segurança e funções, numeradas. `supabase/seed`: conteúdo. `supabase/setup_completo.sql`: tudo junto. `supabase/atualizacao_fase4.sql`: o que mudou nas Fases 3 e 4.
 - `tests`: testes automáticos (Vitest).
 
 ## Problemas comuns
 
-- **"Falta atualizar o banco"** ao abrir o jogo: o site já está na Fase 3, mas o Supabase não. Rode `supabase/atualizacao_fase3.sql` no SQL Editor.
+- **"Falta atualizar o banco"** ou **"O banco ainda não tem as missões desta fase"**: o site está numa fase mais nova que o Supabase. Rode `supabase/atualizacao_fase4.sql` no SQL Editor.
+- **Todas as missões aparecem "Muito arriscada"**: normal no começo para missões difíceis. Para mudar o corte das faixas, edite `missao.faixas_chance`.
 - **Tela branca ou erro 500 falando de variáveis**: faltam `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Na Vercel, adicione e faça **Redeploy**; no Codespaces, confira o `.env.local` e reinicie o `npm run dev`.
 - **"Invalid API key" ou erro de conexão**: a chave foi copiada incompleta ou é a errada. Copie de novo a anon/publishable.
 - **Link do e-mail leva para localhost ou dá "link expirou"**: Site URL ou Redirect URLs errados (Passo 3).
